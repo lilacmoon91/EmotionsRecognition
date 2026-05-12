@@ -1,0 +1,14 @@
+{
+  "val_accuracy": 0.8788701792504073,
+  "test_accuracy": 0.8575619295958279,
+  "test_f1_macro": 0.7831591747564605,
+  "test_f1_weighted": 0.8601618683562616,
+  "train_dir": "D:\\Occlusions\\train_occluded_50",
+  "val_dir": "D:\\Occlusions\\val_original",
+  "test_dir": "D:\\Occlusions\\occluded_test_dataset",
+  "models": [
+    "EfficientNet-B2",
+    "ConvNeXt-Tiny",
+    "ViT-Small"
+  ]
+}
