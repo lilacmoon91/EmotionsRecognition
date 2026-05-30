@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Occlusions_both</title>
+<style>
+    :root { color-scheme: light; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #f8fafc; color: #0f172a; line-height: 1.55; }
+    .nb-wrap { max-width: 960px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+    .nb-cell { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1rem 1.1rem; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .nb-cell-h { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #64748b; margin: 0 0 0.65rem; }
+    .nb-md { font-size: 0.95rem; }
+    .nb-md pre, .nb-out-pre { background: #f1f5f9; border-radius: 8px; padding: 0.75rem 1rem; overflow: auto; font-size: 0.85rem; border: 1px solid #e2e8f0; }
+    .nb-md code { background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.88em; }
+    .nb-md pre code { background: transparent; padding: 0; }
+    .nb-in-label { font-size: 0.8rem; color: #64748b; margin-bottom: 0.35rem; }
+    .nb-in pre { margin: 0; }
+    .nb-out { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #e2e8f0; }
+    .nb-out-title { font-size: 0.8rem; font-weight: 600; color: #64748b; margin-bottom: 0.4rem; }
+    .nb-err { color: #b91c1c; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; }
+    .nb-html-out { overflow: auto; max-width: 100%; font-size: 0.9rem; }
+    .nb-img { max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0.5rem 0; }
+    .nb-raw pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+<div class="nb-wrap">
+<header style="margin-bottom:1.5rem">
+  <h1 style="font-size:1.35rem;font-weight:700;margin:0 0 0.35rem">Occlusions_both</h1>
+  <p style="margin:0;font-size:0.85rem;opacity:0.8">Exported from Jupyter notebook (nbformat 4) — static HTML with embedded CSS.</p>
+</header>
+<section class="nb-cell"><h2 class="nb-cell-h">Cell 1</h2><div class="nb-in"><span class="nb-in-label">In [ ]</span><div class="nb-in-label">Code</div><pre><code class="language-python">import cv2
+import dlib
+import numpy as np
+import random
+from pathlib import Path</code></pre></div></section>
+<section class="nb-cell"><h2 class="nb-cell-h">Cell 2</h2><div class="nb-in"><span class="nb-in-label">In [ ]</span><div class="nb-in-label">Code</div><pre><code class="language-python">detector = dlib.get_frontal_face_detector()
+predictor_path = r&quot;C:\Users\Pulse_GL66\Desktop\Occlusions\Landmark_predictor_path\shape_predictor_68_face_landmarks.dat&quot;
+predictor = dlib.shape_predictor(predictor_path)</code></pre></div></section>
+<section class="nb-cell"><h2 class="nb-cell-h">Cell 3</h2><div class="nb-in"><span class="nb-in-label">In [ ]</span><div class="nb-in-label">Code</div><pre><code class="language-python">def load_image(path):
+    try:
+        with open(path, &#39;rb&#39;) as f:
+            data = np.frombuffer(f.read(), dtype=np.uint8)
+        img = cv2.imdecode(data, cv2.IMREAD_COLOR)
+        return img
+    except:
+        return cv2.imread(path)</code></pre></div></section>
+<section class="nb-cell"><h2 class="nb-cell-h">Cell 4</h2><div class="nb-in"><span class="nb-in-label">In [ ]</span><div class="nb-in-label">Code</div><pre><code class="language-python">def add_upper_occlusions(img, landmarks):
+    h, w = img.shape[:2]
+    eye_points = [(landmarks.part(i).x, landmarks.part(i).y) for i in range(36, 48)]
+    eyes_min_x = min(p[0] for p in eye_points)
+    eyes_max_x = max(p[0] for p in eye_points)
+    eyes_min_y = min(p[1] for p in eye_points)
+    eyes_max_y = max(p[1] for p in eye_points)
+    eyes_width = eyes_max_x - eyes_min_x
+    eyes_height = eyes_max_y - eyes_min_y
+    occ_width = int(eyes_width * random.uniform(1.2, 2.0))
+    occ_height = int(eyes_height * random.uniform(1.6, 4.0))
+    center_x = (eyes_min_x + eyes_max_x) // 2
+    center_y = (eyes_min_y + eyes_max_y) // 2
+    x = center_x - occ_width // 2
+    y = center_y - occ_height // 2
+    x += random.randint(-int(occ_width*0.15), int(occ_width*0.15))
+    y += random.randint(-int(occ_height*0.1), int(occ_height*0.1))
+    x1 = max(0, x)
+    y1 = max(0, y)
+    x2 = min(w, x + occ_width)
+    y2 = min(h, y + occ_height)
+    if x2 &lt;= x1 or y2 &lt;= y1:
+        return img
+    actual_width = x2 - x1
+    actual_height = y2 - y1
+    color = (random.randint(0, 50), random.randint(0, 50), random.randint(0, 50))
+    alpha = random.uniform(0.6, 0.95)
+    shape = random.choice([&#39;rectangle&#39;, &#39;ellipse&#39;])
+    overlay = img.copy() 
+    if shape == &#39;rectangle&#39;:
+        cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
+    else:
+        center = (x1 + actual_width // 2, y1 + actual_height // 2)
+        axes = (actual_width // 2, actual_height // 2)
+        cv2.ellipse(overlay, center, axes, 0, 0, 360, color, -1)
+    result = cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0)
+    return result</code></pre></div></section>
+<section class="nb-cell"><h2 class="nb-cell-h">Cell 5</h2><div class="nb-in"><span class="nb-in-label">In [ ]</span><div class="nb-in-label">Code</div><pre><code class="language-python">def add_lower_occlusions(img, landmarks):
+    h, w = img.shape[:2]
+    mouth_points = [(landmarks.part(i).x, landmarks.part(i).y) for i in range(48, 68)]
+    mouth_min_x = min(p[0] for p in mouth_points)
+    mouth_max_x = max(p[0] for p in mouth_points)
+    mouth_min_y = min(p[1] for p in mouth_points)
+    mouth_max_y = max(p[1] for p in mouth_points)
+    mouth_width = mouth_max_x - mouth_min_x
+    mouth_height = mouth_max_y - mouth_min_y
+    occ_width = int(mouth_width * random.uniform(1.2, 2.4))
+    occ_height = int(mouth_height * random.uniform(1.2, 2.4))
+    center_x = (mouth_min_x + mouth_max_x) // 2
+    center_y = (mouth_min_y + mouth_max_y) // 2
+    x = center_x - occ_width // 2
+    y = center_y - occ_height // 2
+    x += random.randint(-int(occ_width*0.15), int(occ_width*0.15))
+    y += random.randint(-int(occ_height*0.1), int(occ_height*0.1))
+    x1 = max(0, x)
+    y1 = max(0, y)
+    x2 = min(w, x + occ_width)
+    y2 = min(h, y + occ_height)
+    if x2 &lt;= x1 or y2 &lt;= y1:
+        return img
+    actual_width = x2 - x1
+    actual_height = y2 - y1
+    color_options = [
+        (random.randint(150, 220), random.randint(150, 220), random.randint(150, 220)),
+        (random.randint(100, 180), random.randint(150, 220), random.randint(200, 240)),
+        (random.randint(180, 220), random.randint(180, 220), random.randint(200, 240)),
+    ]
+    color = random.choice(color_options)
+    alpha = random.uniform(0.7, 0.95)
+    shape = random.choice([&#39;rectangle&#39;, &#39;ellipse&#39;])
+    overlay = img.copy()
+    if shape == &#39;rectangle&#39;:
+        cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
+    else:
+        center = (x1 + actual_width // 2, y1 + actual_height // 2)
+        axes = (actual_width // 2, actual_height // 2)
+        cv2.ellipse(overlay, center, axes, 0, 0, 360, color, -1)
+    result = cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0)
+    return result</code></pre></div></section>
+<section class="nb-cell"><h2 class="nb-cell-h">Cell 6</h2><div class="nb-in"><span class="nb-in-label">In [ ]</span><div class="nb-in-label">Code</div><pre><code class="language-python">def apply_occlusions(input_dir, output_dir, occlusion_ratio=0.7):
+    input_dir = Path(input_dir)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    images = [p for p in input_dir.rglob(&#39;*&#39;) if p.is_file()]
+    stats = {&#39;upper&#39;: 0, &#39;lower&#39;: 0, &#39;no_face&#39;: 0, &#39;original&#39;: 0}
+    for i, img_path in enumerate(images):
+        img = load_image(img_path)
+        if img is None:
+            stats[&#39;no_face&#39;] += 1
+            continue
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        faces = detector(gray)
+        if len(faces) == 0:
+            stats[&#39;no_face&#39;] += 1
+            rel_path = img_path.relative_to(input_dir)
+            output_path = output_dir / rel_path
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            cv2.imwrite(output_path, img)
+            continue
+        face = faces[0]
+        landmarks = predictor(gray, face)
+        if random.random() &lt; occlusion_ratio:
+            if random.random() &lt; 0.5:
+                result = add_upper_occlusions(img, landmarks)
+                stats[&#39;upper&#39;] += 1
+            else:
+                result = add_lower_occlusions(img, landmarks)
+                stats[&#39;lower&#39;] += 1
+        else:
+            result = img
+            stats[&#39;original&#39;] += 1
+        rel_path = img_path.relative_to(input_dir)
+        output_path = output_dir / rel_path
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        cv2.imwrite(output_path, result)
+    print(f&quot;Очки/повязка: {stats[&#39;upper&#39;]}&quot;)
+    print(f&quot;Маска: {stats[&#39;lower&#39;]}&quot;)
+    print(f&quot;Оригинал: {stats[&#39;original&#39;]}&quot;)
+    print(f&quot;Лицо не найдено: {stats[&#39;no_face&#39;]}&quot;)
+    print(f&quot;Всего обработано: {len(images)}&quot;)</code></pre></div></section>
+<section class="nb-cell"><h2 class="nb-cell-h">Cell 7</h2><div class="nb-in"><span class="nb-in-label">In [ ]</span><div class="nb-in-label">Code</div><pre><code class="language-python">apply_occlusions(input_dir=r&quot;D:\НИР\RAF-DB\DATASET\test&quot;, output_dir=r&quot;D:\Occlusions\occluded_test_dataset&quot;, occlusion_ratio=0.7)</code></pre></div><div class="nb-out"><div class="nb-out-title">Stream</div><pre class="nb-out-pre">Очки/повязка: 796
+Маска: 851
+Оригинал: 665
+Лицо не найдено: 756
+Всего обработано: 3068
+</pre></div></section>
+</div>
+</body>
+</html>
